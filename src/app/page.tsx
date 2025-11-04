@@ -30,6 +30,7 @@ import {
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { getFirestore, collection, query, where, getDocs, addDoc, deleteDoc, doc, setDoc } from "firebase/firestore";
+import { ValueType } from "recharts/types/component/DefaultTooltipContent";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -53,9 +54,20 @@ const CATEGORIAS = {
 const FORMAS = ["PIX", "Cartão Débito", "Cartão Crédito", "Dinheiro", "Transferência", "Boleto"];
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-function cpfToEmail(cpf) { return `${cpf}@login.local`; }
-function moeda(n) { if (n == null || isNaN(n)) return "R$ 0,00"; return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); }
-function parseNumber(v) { const n = typeof v === "string" ? Number(v.replace(",", ".")) : Number(v); return isNaN(n) ? 0 : n; }
+function cpfToEmail(cpf: string): string {
+  const digits = String(cpf || "").replace(/\D/g, "");
+  return `${digits}@login.local`;
+}
+
+function moeda(n: number | null | undefined): string {
+  if (n == null || isNaN(n)) return "R$ 0,00";
+  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function parseNumber(v: string | number): number {
+  const n = typeof v === "string" ? Number(v.replace(",", ".")) : Number(v);
+  return isNaN(n) ? 0 : n;
+}
 
 // =============== App ===============
 export default function App() {
@@ -64,17 +76,17 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u) {
-        const q = query(collection(db, "profiles"), where("uid", "==", u.uid));
-        const s = await getDocs(q);
-        if (!s.empty) setPerfil(s.docs[0].data());
-      } else {
-        setPerfil(null);
-      }
-      setLoading(false);
-    });
+    const unsub = onAuthStateChanged(auth, async function (u) {
+        setUser(u);
+        if (u) {
+          const q = query(collection(db, "profiles"), where("uid", "==", u.uid));
+          const s = await getDocs(q);
+          if (!s.empty) setPerfil(s.docs[0].data());
+        } else {
+          setPerfil(null);
+        }
+        setLoading(false);
+      });
     return () => unsub();
   }, []);
 
@@ -92,7 +104,7 @@ function Login() {
     e.preventDefault();
     setErro("");
     try {
-      const email = cpfToEmail((cpf||"").replace(/\D/g, ""));
+      const email = cpfToEmail({ cpf: (cpf || "").replace(/\D/g, "") });
       await signInWithEmailAndPassword(auth, email, senha);
     } catch (e) {
       setErro("CPF ou senha inválidos.");
