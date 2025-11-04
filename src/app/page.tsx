@@ -1,4 +1,5 @@
 "use client";
+import type { User } from "firebase/auth";
 
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
@@ -71,9 +72,10 @@ function parseNumber(v: string | number): number {
 
 // =============== App ===============
 export default function App() {
-  const [user, setUser] = useState(null);
-  const [perfil, setPerfil] = useState(null); // { uid, nome, cpf, dob, role }
-  const [loading, setLoading] = useState(true);
+const [user, setUser] = useState<User | null>(null);
+  type Perfil = { uid: string; nome?: string; cpf?: string; dob?: string; role?: "admin" | "user" } | null;
+const [profile, setProfile] = useState<Perfil>(null);
+const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async function (u) {
